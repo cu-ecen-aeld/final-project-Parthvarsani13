@@ -10,7 +10,6 @@ git submodule update
 # local.conf won't exist until this step on first execution
 source poky/oe-init-build-env
 
-# CONFLINE="MACHINE = \"qemuarm64\""
 CONFLINE="MACHINE = \"raspberrypi4\""
 
 #Create image of the type rpi-sdimg
@@ -22,6 +21,10 @@ MEMORY="GPU_MEM = \"16\""
 # I2C related
 MODULE_I2C="ENABLE_I2C = \"1\""
 AUTOLOAD_I2C="KERNEL_MODULE_AUTOLOAD:rpi += \"i2c-dev i2c-bcm2708\""
+
+# SPI support
+MODULE_SPI="ENABLE_SPI_BUS = \"1\""
+AUTOLOAD_SPI="KERNEL_MODULE_AUTOLOAD:rpi += \"spidev\""
 
 # CAN related
 MODULE_CAN="ENABLE_CAN = \"1\""
@@ -57,6 +60,27 @@ local_can_oscillator_info=$?
 
 cat conf/local.conf | grep "${IMAGE_ADD}" > /dev/null
 local_imgadd_info=$?
+
+cat conf/local.conf | grep "${MODULE_SPI}" > /dev/null
+local_spi_info=$?
+
+cat conf/local.conf | grep "${AUTOLOAD_SPI}" > /dev/null
+local_spi_autoload_info=$?
+
+if [ $local_spi_info -ne 0 ]; then
+    echo "Append ${MODULE_SPI} in the local.conf file"
+    echo ${MODULE_SPI} >> conf/local.conf
+else
+    echo "${MODULE_SPI} already exists in the local.conf file"
+fi
+
+if [ $local_spi_autoload_info -ne 0 ]; then
+    echo "Append ${AUTOLOAD_SPI} in the local.conf file"
+    echo ${AUTOLOAD_SPI} >> conf/local.conf
+else
+    echo "${AUTOLOAD_SPI} already exists in the local.conf file"
+fi
+
 
 if [ $local_conf_info -ne 0 ];then
     echo "Append ${CONFLINE} in the local.conf file"
