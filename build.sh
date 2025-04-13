@@ -1,49 +1,126 @@
 #!/bin/bash
-# Script to build Yocto image for Raspberry Pi 4
-# Author: Parth Varsani <parth.varsani@colorado.edu>
+# Script to build image for qemu.
+# Author: Siddhant Jajoo.
 
 git submodule init
 git submodule sync
 git submodule update
 
-# Set up build environment
+# local.conf won't exist until this step on first execution
 source poky/oe-init-build-env
 
-# Local.conf settings to ensure are present
-CONFLINES=(
-    'MACHINE = "raspberrypi4"'
-    'IMAGE_FSTYPES = "wic.bz2"'
-    'GPU_MEM = "16"'
-    'KERNEL_MODULES:append = " i2c-dev "'                     # Add I2C character device
-    'KERNEL_MODULE_AUTOLOAD:rpi += "i2c-dev"'                # Auto-load i2c-dev module
-    'IMAGE_INSTALL:append = " i2c-tools python3 mosquitto "' # Tools for testing
-)
 
-for line in "${CONFLINES[@]}"; do
-    grep -Fxq "$line" conf/local.conf || echo "$line" >> conf/local.conf
-done
+# CONFLINE="MACHINE = \"qemuarm64\""
+CONFLINE="MACHINE = \"raspberrypi4\""
 
-# Required layers
-BBLAYERS_ADD=(
-    '../meta-raspberrypi'
-    '../meta-openembedded/meta-oe'
-    '../meta-openembedded/meta-python'
-    '../meta-openembedded/meta-networking'
-)
+#Create image of the type rpi-sdimg
+IMAGE="IMAGE_FSTYPES = \"wic.bz2\""
 
-for layer in "${BBLAYERS_ADD[@]}"; do
-    bitbake-layers show-layers | grep "$(basename "$layer")" > /dev/null
-    if [ $? -ne 0 ]; then
-        echo "Adding $layer"
-        bitbake-layers add-layer "$layer"
-    else
-        echo "$layer already exists"
-    fi
-done
+#Set GPU memory as minimum
+MEMORY="GPU_MEM = \"16\""
 
-# Exit on error
+cat conf/local.conf | grep "${CONFLINE}" > /dev/null
+local_conf_info=$?
+
+cat conf/local.conf | grep "${IMAGE}" > /dev/null
+local_image_info=$?
+
+cat conf/local.conf | grep "${MEMORY}" > /dev/null
+local_memory_info=$?
+
+MODULE_I2C="ENABLE_I2C = \"1\""
+cat conf/local.conf | grep "${MODULE_I2C}" > /dev/null
+local_i2c_info=$?
+
+# Autoload I2C_MODULE
+AUTOLOAD_I2C="KERNEL_MODULE_AUTOLOAD:rpi += \"i2c-dev i2c-bcm2708\""
+cat conf/local.conf | grep "${AUTOLOAD_I2C}" > /dev/null
+local_i2c_autoload_info=$?
+
+###############################################################
+# Add the following to add i2c-tools support for detecting 
+# I2C device
+###############################################################
+IMAGE_ADD="IMAGE_INSTALL:append = \" i2c-tools python3 mosquitto\""
+cat conf/local.conf | grep "${IMAGE_ADD}" > /dev/null
+local_imgadd_info=$?
+
+if [ $local_conf_info -ne 0 ];then
+echo "Append ${CONFLINE} in the local.conf file"
+        echo ${CONFLINE} >> conf/local.conf
+
+else
+        echo "${CONFLINE} already exists in the local.conf file"
+fi
+
+if [ $local_i2c_info -ne 0 ];then
+        echo "Append ${MODULE_I2C} in the local.conf file"
+        echo ${MODULE_I2C} >> conf/local.conf
+else
+        echo "${MODULE_I2C} already exists in the local.conf file"
+fi
+
+if [ $local_i2c_autoload_info -ne 0 ];then
+        echo "Append ${AUTOLOAD_I2C} in the local.conf file"
+        echo ${AUTOLOAD_I2C} >> conf/local.conf
+
+else
+	echo "${AUTOLOAD_I2C} already exists in the local.conf file"
+fi
+
+if [ $local_image_info -ne 0 ];then 
+    echo "Append ${IMAGE} in the local.conf file"
+	echo ${IMAGE} >> conf/local.conf
+else
+	echo "${IMAGE} already exists in the local.conf file"
+fi
+
+if [ $local_memory_info -ne 0 ];then
+    echo "Append ${MEMORY} in the local.conf file"
+	echo ${MEMORY} >> conf/local.conf
+else
+	echo "${MEMORY} already exists in the local.conf file"
+fi
+
+# if [ $local_licn_info -ne 0 ];then
+#     echo "Append ${LICENCE} in the local.conf file"
+# 	echo ${LICENCE} >> conf/local.conf
+# else
+# 	echo "${LICENCE} already exists in the local.conf file"
+# fi
+
+if [ $local_imgadd_info -ne 0 ];then
+        echo "Append ${IMAGE_ADD} in the local.conf file"
+        echo ${IMAGE_ADD} >> conf/local.conf
+else
+        echo "${IMAGE_ADD} already exists in the local.conf file"
+fi
+
+
+
+bitbake-layers show-layers | grep "meta-raspberrypi" > /dev/null
+layer_info=$?
+
+if [ $layer_info -ne 0 ];then
+	echo "Adding meta-raspberrypi  layer"
+	bitbake-layers add-layer ../meta-raspberrypi
+else
+	echo "meta-raspberrypi  layer already exists"
+fi
+
+
+bitbake-layers show-layers | grep "meta-openembedded" > /dev/null
+layer_info_2=$?
+
+if [ $layer_info_2 -ne 0 ];then
+	echo "Adding meta-openembedded  layer"
+	bitbake-layers add-layer ../meta-openembedded/meta-oe
+	bitbake-layers add-layer ../meta-openembedded/meta-python
+	bitbake-layers add-layer ../meta-openembedded/meta-networking
+else
+	echo "meta-openembedded  layer already exists"
+fi
+
+
 set -e
-
-# Build the image
 bitbake core-image-base
-
