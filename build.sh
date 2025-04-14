@@ -1,37 +1,37 @@
 #!/bin/bash
 # Script to build image for qemu.
 # Author: Siddhant Jajoo.
-# Modifier: Parth Varsani
+# Modifiers: Parth Varsani and Abhirath Koushik
 
 git submodule init
 git submodule sync
 git submodule update
 
-# local.conf won't exist until this step on first execution
 source poky/oe-init-build-env
 
+# Creating the image for RaspberryPi 4B
 CONFLINE="MACHINE = \"raspberrypi4\""
 
-#Create image of the type rpi-sdimg
+# Create image of the type rpi-sdimg
 IMAGE="IMAGE_FSTYPES = \"wic.bz2\""
 
-#Set GPU memory as minimum
+# Set GPU memory as minimum
 MEMORY="GPU_MEM = \"16\""
 
-# I2C related
+# Enable I2C in Raspberrypi Yocto Build
 MODULE_I2C="ENABLE_I2C = \"1\""
 AUTOLOAD_I2C="KERNEL_MODULE_AUTOLOAD:rpi += \"i2c-dev i2c-bcm2708\""
 
-# SPI support
+# Enable SPI in Raspberrypi Yocto Build
 MODULE_SPI="ENABLE_SPI_BUS = \"1\""
 AUTOLOAD_SPI="KERNEL_MODULE_AUTOLOAD:rpi += \"spidev\""
 
-# CAN related
+# Enable CAN in Raspberrypi Yocto Build
 MODULE_CAN="ENABLE_CAN = \"1\""
 AUTOLOAD_CAN="KERNEL_MODULE_AUTOLOAD:rpi += \"mcp251x flexcan\""
 CAN_OSCILLATOR_CONFIG="CAN_OSCILLATOR = \"8000000\""
 
-# Extra image tools
+# Installing Utility Tools
 IMAGE_ADD="IMAGE_INSTALL:append = \" i2c-tools python3 mosquitto can-utils iproute2\""
 
 cat conf/local.conf | grep "${CONFLINE}" > /dev/null
@@ -145,6 +145,7 @@ else
     echo "${IMAGE_ADD} already exists in the local.conf file"
 fi
 
+# Adding meta-raspberrypi layer 
 bitbake-layers show-layers | grep "meta-raspberrypi" > /dev/null
 layer_info=$?
 
@@ -155,6 +156,7 @@ else
     echo "meta-raspberrypi  layer already exists"
 fi
 
+# Adding meta-openembedded layer
 bitbake-layers show-layers | grep "meta-openembedded" > /dev/null
 layer_info_2=$?
 
@@ -169,4 +171,3 @@ fi
 
 set -e
 bitbake core-image-base
-
