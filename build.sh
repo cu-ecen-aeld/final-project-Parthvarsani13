@@ -167,6 +167,16 @@ else
     echo "meta-openembedded  layer already exists"
 fi
 
+bitbake-layers show-layers | grep "meta-application" > /dev/null
+layer_app_info=$?
+
+if [ $layer_app_info -ne 0 ];then
+    echo "Adding meta-application layer"
+    bitbake-layers add-layer ../meta-application
+else
+    echo "meta-application layer already exists"
+fi
+
 set -e
 bitbake core-image-base
 
