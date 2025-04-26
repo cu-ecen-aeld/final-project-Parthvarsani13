@@ -5,7 +5,6 @@ IMAGE_FEATURES += "ssh-server-openssh"
 
 # Install packages for SSH login
 CORE_IMAGE_EXTRA_INSTALL += "openssh"
-CORE_IMAGE_EXTRA_INSTALL += "can-application"
 CORE_IMAGE_EXTRA_INSTALL += "apds-driver"
 
 # Root password setup (hashed version of 'root')
