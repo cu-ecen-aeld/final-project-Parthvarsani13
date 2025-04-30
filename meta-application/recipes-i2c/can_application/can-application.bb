@@ -9,7 +9,7 @@ SRC_URI = "git://github.com/cu-ecen-aeld/final-project-abhirathkoushik-cub.git;p
 
 PV = "1.0+git${SRCPV}"
 # TODO: set to reference a specific commit hash in your assignment repo
-SRCREV = "02e6dccf70dc4550e145fcf0cd41179fbe4558c1"
+SRCREV = "e909df2e36534fcccacb9a39552b1f74215d8ac8"
 
 # This sets your staging directory based on WORKDIR, where WORKDIR is defined at 
 # https://docs.yoctoproject.org/ref-manual/variables.html?highlight=workdir#term-WORKDIR
@@ -19,21 +19,36 @@ S = "${WORKDIR}/git"
 
 # TODO: Add the aesdsocket application and any other files you need to install
 # See https://git.yoctoproject.org/poky/plain/meta/conf/bitbake.conf?h=kirkstone
-FILES:${PN} += "${bindir}/can_tx.sh"
-FILES:${PN} += "${bindir}/can_rx.sh"
+FILES:${PN} += "${bindir}/server_node.sh"
+FILES:${PN} += "${bindir}/client_node.sh"
+FILES:${PN} += "${bindir}/apds_can_control"
+FILES:${PN} += "${bindir}/can_tx_from_file"
 
+FILES:${PN} += "${bindir}/socket_can_client"
+FILES:${PN} += "${bindir}/socket_can_server"
+
+FILES:${PN} += "${bindir}/tx_server"
+FILES:${PN} += "${bindir}/rx_client"
 do_configure () {
 	:
 }
 
 do_compile () {
-	:
+
+	oe_runmake
 }
 
 do_install () {
 	
 	install -d ${D}${bindir}
 
-	install -m 0777 ${S}/can_tx.sh	${D}${bindir}/
-	install -m 0777 ${S}/can_rx.sh 	${D}${bindir}/
+	install -m 0777 ${S}/server_node.sh	${D}${bindir}/
+	install -m 0777 ${S}/client_node.sh 	${D}${bindir}/
+	install -m 0777 ${S}/apds_can_control 	${D}${bindir}/
+	install -m 0777 ${S}/can_tx_from_file 	${D}${bindir}/
+
+	install -m 0777 ${S}/socket_can_client 	${D}${bindir}/
+	install -m 0777 ${S}/socket_can_server 	${D}${bindir}/
+	install -m 0777 ${S}/rx_client 	${D}${bindir}/
+	install -m 0777 ${S}/tx_server 	${D}${bindir}/
 }
